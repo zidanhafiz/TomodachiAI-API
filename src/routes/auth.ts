@@ -1,0 +1,99 @@
+import { zValidator } from "@hono/zod-validator";
+import { Hono } from "hono";
+import { z } from "zod";
+import { sign, UserJwtPayload, verify } from "hono/jwt";
+
+import userModels from "../models/user";
+
+const signupSchema = z.object({
+  email: z.string().email(),
+  firstName: z.string().min(3).max(20),
+  lastName: z.string().min(0).max(20),
+  password: z.string().min(8).max(20),
+});
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8).max(20),
+});
+
+const auth = new Hono()
+  .post("/signup", zValidator("json", signupSchema), async (c) => {
+    try {
+      const { email, firstName, lastName, password } = c.req.valid("json");
+
+      const isUserExists = await userModels.getUserByEmail(email);
+
+      if (isUserExists) {
+        return c.json({ error: "User already exists" }, 400);
+      }
+
+      const hashedPassword = await Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 });
+
+      await userModels.createUser({ email, firstName, lastName, password: hashedPassword, role: "user" });
+
+      return c.json({ data: "Successfully registered user" });
+    } catch (error) {
+      return c.json({ error: "Failed to register user" }, 500);
+    }
+  })
+  .post("/login", zValidator("json", loginSchema), async (c) => {
+    try {
+      const { email, password } = c.req.valid("json");
+
+      const user = await userModels.getUserByEmail(email);
+
+      if (!user) {
+        return c.json({ error: "Invalid email or password" }, 400);
+      }
+
+      const isPasswordCorrect = await Bun.password.verify(password, user.password);
+
+      if (!isPasswordCorrect) {
+        return c.json({ error: "Invalid email or password" }, 400);
+      }
+
+      const expiresIn14Days = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 14;
+      const expiresIn1Day = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
+
+      const accessToken = await sign({ id: user.id, email: user.email, role: user.role, exp: expiresIn1Day }, process.env.JWT_SECRET || "");
+      const refreshToken = await sign({ id: user.id, email: user.email, role: user.role, exp: expiresIn14Days }, process.env.JWT_SECRET || "");
+
+      await userModels.updateUser(user.id, { refreshToken });
+
+      return c.json({ data: { accessToken, refreshToken } });
+    } catch (error) {
+      return c.json({ error: "Failed to login" }, 500);
+    }
+  })
+  .post("/refresh", zValidator("json", z.object({ refreshToken: z.string().min(5) })), async (c) => {
+    try {
+      const { refreshToken } = c.req.valid("json");
+
+      if (!refreshToken) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      const decoded = await (<Promise<UserJwtPayload>>verify(refreshToken, process.env.JWT_SECRET || ""));
+
+      if (!decoded.id) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      const user = await userModels.getUserById(decoded.id);
+
+      if (!user) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      const expiresIn1Day = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
+
+      const accessToken = await sign({ id: user.id, email: user.email, role: user.role, exp: expiresIn1Day }, process.env.JWT_SECRET || "");
+
+      return c.json({ data: { accessToken } });
+    } catch (error) {
+      return c.json({ error: "Failed to refresh token" }, 500);
+    }
+  });
+
+export default auth;

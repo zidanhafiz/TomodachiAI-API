@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 4000:4000
+      - 5555:5555
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://tomodachiai:tomodachiai211001@tomodachiai-api-db-1:5432/tomodachiai?schema=public
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    develop:
+      watch:
+        - path: package.json
+          action: rebuild
+        - path: bun.lockb
+          action: rebuild
+        - path: ./src
+          target: /app/src
+          action: sync
+        - path: ./prisma
+          target: /app/prisma
+          action: sync
+  
+  db:
+    image: postgres:16.6-alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=tomodachiai
+      - POSTGRES_PASSWORD=tomodachiai211001
+      - POSTGRES_DB=tomodachiai
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
