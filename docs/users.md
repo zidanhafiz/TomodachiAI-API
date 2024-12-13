@@ -1,6 +1,7 @@
-# User API Spec
+# Users API Spec
 List of endpoints for user management.
-- [User API Spec](#user-api-spec)
+
+- [Users API Spec](#users-api-spec)
   - [Register User](#register-user)
   - [Login User](#login-user)
   - [Refresh Token](#refresh-token)
@@ -21,8 +22,8 @@ Request Body:
 
 ```json
 {
-  "firstName": "John",
-  "lastName": "Doe",
+  "first_name": "John",
+  "last_name": "Doe",
   "email": "test@example.com",
   "password": "password"
 }
@@ -66,8 +67,8 @@ Response:
 ```json
 {
   "data": {
-    "accessToken": "1234567890",
-    "refreshToken": "1234567890"
+    "access_token": "1234567890",
+    "refresh_token": "1234567890"
   }
 }
 ```
@@ -95,7 +96,7 @@ Request Body:
 
 ```json
 {
-  "refreshToken": "1234567890"
+  "refresh_token": "1234567890"
 }
 ```
 
@@ -104,7 +105,7 @@ Response:
 ```json
 {
   "data": {
-    "accessToken": "1234567890"
+    "access_token": "1234567890"
   }
 }
 ```
@@ -140,13 +141,13 @@ Response:
   "data": {
     "id": "123",
     "email": "test@example.com",
-    "firstName": "John",
-    "lastName": "Doe",
+    "first_name": "John",
+    "last_name": "Doe",
     "role": "admin",
-    "refreshToken": "1234567890",
+    "refresh_token": "1234567890",
     "credits": 100,
-    "createdAt": "2021-01-01T00:00:00Z",
-    "updatedAt": "2021-01-01T00:00:00Z"
+    "created_at": "2021-01-01T00:00:00Z",
+    "updated_at": "2021-01-01T00:00:00Z"
   }
 }
 ```
@@ -179,8 +180,8 @@ Request Body:
 
 ```json
 {
-  "firstName": "John",
-  "lastName": "Doe"
+  "first_name": "John",
+  "last_name": "Doe"
 }
 ```
 
@@ -191,12 +192,12 @@ Response:
   "data": {
     "id": "123",
     "email": "test@example.com",
-    "firstName": "John",
-    "lastName": "Doe",
+    "first_name": "John",
+    "last_name": "Doe",
     "role": "admin",
     "credits": 100,
-    "createdAt": "2021-01-01T00:00:00Z",
-    "updatedAt": "2021-01-01T00:00:00Z"
+    "created_at": "2021-01-01T00:00:00Z",
+    "updated_at": "2021-01-01T00:00:00Z"
   }
 }
 ```
@@ -281,26 +282,26 @@ Response:
     {
       "id": "123",
       "email": "test@example.com",
-      "firstName": "John",
-      "lastName": "Doe",
+      "first_name": "John",
+      "last_name": "Doe",
       "role": "admin",
       "credits": 100,
-      "createdAt": "2021-01-01T00:00:00Z",
-      "updatedAt": "2021-01-01T00:00:00Z"
+      "created_at": "2021-01-01T00:00:00Z",
+      "updated_at": "2021-01-01T00:00:00Z"
     },
     {
       "id": "124",
       "email": "test2@example.com",
-      "firstName": "Jane",
-      "lastName": "Smith",
+      "first_name": "Jane",
+      "last_name": "Smith",
       "role": "user",
       "credits": 100,
-      "createdAt": "2021-01-01T00:00:00Z",
-      "updatedAt": "2021-01-01T00:00:00Z"
+      "created_at": "2021-01-01T00:00:00Z",
+      "updated_at": "2021-01-01T00:00:00Z"
     }
   ],
-  "currentPage": 1,
-  "totalPages": 10
+  "current_page": 1,
+  "total_pages": 10
 }
 ```
 

@@ -7,8 +7,8 @@ import userModels from "../models/user";
 
 const signupSchema = z.object({
   email: z.string().email(),
-  firstName: z.string().min(3).max(20),
-  lastName: z.string().min(0).max(20),
+  first_name: z.string().min(3).max(20),
+  last_name: z.string().min(0).max(20),
   password: z.string().min(8).max(20),
 });
 
@@ -20,7 +20,7 @@ const loginSchema = z.object({
 const auth = new Hono()
   .post("/signup", zValidator("json", signupSchema), async (c) => {
     try {
-      const { email, firstName, lastName, password } = c.req.valid("json");
+      const { email, first_name, last_name, password } = c.req.valid("json");
 
       const isUserExists = await userModels.getUserByEmail(email);
 
@@ -30,10 +30,11 @@ const auth = new Hono()
 
       const hashedPassword = await Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 });
 
-      await userModels.createUser({ email, firstName, lastName, password: hashedPassword, role: "user" });
+      await userModels.createUser({ email, firstName: first_name, lastName: last_name, password: hashedPassword, role: "USER" });
 
       return c.json({ data: "Successfully registered user" });
     } catch (error) {
+      console.error(error);
       return c.json({ error: "Failed to register user" }, 500);
     }
   })
@@ -61,20 +62,21 @@ const auth = new Hono()
 
       await userModels.updateUser(user.id, { refreshToken });
 
-      return c.json({ data: { accessToken, refreshToken } });
+      return c.json({ data: { access_token: accessToken, refresh_token: refreshToken } });
     } catch (error) {
+      console.error(error);
       return c.json({ error: "Failed to login" }, 500);
     }
   })
-  .post("/refresh", zValidator("json", z.object({ refreshToken: z.string().min(5) })), async (c) => {
+  .post("/refresh", zValidator("json", z.object({ refresh_token: z.string().min(5) })), async (c) => {
     try {
-      const { refreshToken } = c.req.valid("json");
+      const { refresh_token } = c.req.valid("json");
 
-      if (!refreshToken) {
+      if (!refresh_token) {
         return c.json({ error: "Unauthorized" }, 401);
       }
 
-      const decoded = await (<Promise<UserJwtPayload>>verify(refreshToken, process.env.JWT_SECRET || ""));
+      const decoded = await (<Promise<UserJwtPayload>>verify(refresh_token, process.env.JWT_SECRET || ""));
 
       if (!decoded.id) {
         return c.json({ error: "Unauthorized" }, 401);
@@ -90,8 +92,9 @@ const auth = new Hono()
 
       const accessToken = await sign({ id: user.id, email: user.email, role: user.role, exp: expiresIn1Day }, process.env.JWT_SECRET || "");
 
-      return c.json({ data: { accessToken } });
+      return c.json({ data: { access_token: accessToken } });
     } catch (error) {
+      console.error(error);
       return c.json({ error: "Failed to refresh token" }, 500);
     }
   });

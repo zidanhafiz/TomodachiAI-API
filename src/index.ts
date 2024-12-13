@@ -9,6 +9,7 @@ import { verifyUser } from "./middlewares/users";
 
 import auth from "./routes/auth";
 import users from "./routes/users";
+import agents from "./routes/agents";
 
 const app = new Hono();
 
@@ -25,6 +26,7 @@ app.use("/v1/users/:id", verifyUser);
 // Routes
 app.route("/auth", auth);
 app.route("/v1/users", users);
+app.route("/v1/agents", agents);
 
 export default {
   port: 4000,

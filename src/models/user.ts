@@ -13,7 +13,7 @@ const createUser = async ({
   firstName: string;
   lastName: string;
   password: string;
-  role: string;
+  role: "ADMIN" | "USER";
 }) => {
   try {
     const newUser = await prisma.user.create({
@@ -85,7 +85,7 @@ const deleteUser = async (id: string) => {
   }
 };
 
-const listUsers = async ({ name, email, role, page = 1, limit = 10 }: { name?: string; email?: string; role?: string; page?: number; limit?: number }) => {
+const listUsers = async ({ name, email, role, page = 1, limit = 10 }: { name?: string; email?: string; role?: "ADMIN" | "USER"; page?: number; limit?: number }) => {
   try {
     const filter = {} as Prisma.UserWhereInput;
 
@@ -98,7 +98,7 @@ const listUsers = async ({ name, email, role, page = 1, limit = 10 }: { name?: s
     }
 
     if (role) {
-      filter.role = { contains: role };
+      filter.role = role;
     }
 
     if (Object.keys(filter).length === 0) {

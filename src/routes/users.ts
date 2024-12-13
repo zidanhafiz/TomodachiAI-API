@@ -2,11 +2,12 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import userModels from "../models/user";
+import { toSnakeCase } from "../utils/snakeCaseFormat";
 
 const idParamSchema = z.object({ id: z.string() });
 const updateUserSchema = z.object({
-  firstName: z.string().min(3).max(20),
-  lastName: z.string().min(0).max(20),
+  first_name: z.string().min(3).max(20),
+  last_name: z.string().min(0).max(20),
 });
 const listUsersSchema = z.object({
   name: z.string().optional(),
@@ -32,7 +33,7 @@ const users = new Hono<{
         return c.json({ error: "User not found" }, 404);
       }
 
-      return c.json({ data: user });
+      return c.json({ data: toSnakeCase(user) });
     } catch (error) {
       console.error(error);
       return c.json({ error: "Failed to get user" }, 500);
@@ -41,9 +42,9 @@ const users = new Hono<{
   .patch("/:id", zValidator("param", idParamSchema), zValidator("json", updateUserSchema), async (c) => {
     try {
       const { id } = c.req.valid("param");
-      const { firstName, lastName } = c.req.valid("json");
+      const { first_name, last_name } = c.req.valid("json");
 
-      await userModels.updateUser(id, { firstName, lastName });
+      await userModels.updateUser(id, { firstName: first_name, lastName: last_name });
 
       return c.json({ data: "Successfully updated user" });
     } catch (error) {
@@ -67,18 +68,18 @@ const users = new Hono<{
     try {
       const userRole = c.get("user_role");
 
-      if (userRole !== "admin") {
+      if (userRole !== "ADMIN") {
         return c.json({ error: "Unauthorized" }, 401);
       }
 
       const { name, email, role, page, limit } = c.req.valid("query");
 
-      const users = await userModels.listUsers({ name, email, role, page, limit });
+      const users = await userModels.listUsers({ name, email, role: role as "ADMIN" | "USER" | undefined, page, limit });
 
       const currentPage = page || 1;
       const totalPages = limit ? Math.ceil(users.length / limit) : 1;
 
-      return c.json({ data: users, currentPage, totalPages });
+      return c.json({ data: toSnakeCase(users), current_page: currentPage, total_pages: totalPages });
     } catch (error) {
       console.error(error);
       return c.json({ error: "Failed to get users" }, 500);

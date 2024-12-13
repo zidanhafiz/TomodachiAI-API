@@ -3,7 +3,7 @@ export type User = {
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
+  role: "ADMIN" | "USER";
   password?: string;
   refreshToken: string;
   createdAt?: Date;
