@@ -53,6 +53,8 @@ const getUserById = async (id: string) => {
         lastName: true,
         role: true,
         refreshToken: true,
+        credits: true,
+        isVerified: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -85,7 +87,19 @@ const deleteUser = async (id: string) => {
   }
 };
 
-const listUsers = async ({ name, email, role, page = 1, limit = 10 }: { name?: string; email?: string; role?: "ADMIN" | "USER"; page?: number; limit?: number }) => {
+const listUsers = async ({
+  name,
+  email,
+  role,
+  page = 1,
+  limit = 10,
+}: {
+  name?: string;
+  email?: string;
+  role?: "ADMIN" | "USER";
+  page?: number;
+  limit?: number;
+}) => {
   try {
     const filter = {} as Prisma.UserWhereInput;
 
@@ -109,6 +123,8 @@ const listUsers = async ({ name, email, role, page = 1, limit = 10 }: { name?: s
           firstName: true,
           lastName: true,
           role: true,
+          credits: true,
+          isVerified: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -126,6 +142,8 @@ const listUsers = async ({ name, email, role, page = 1, limit = 10 }: { name?: s
         firstName: true,
         lastName: true,
         role: true,
+        credits: true,
+        isVerified: true,
         createdAt: true,
         updatedAt: true,
       },

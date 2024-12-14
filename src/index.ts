@@ -31,4 +31,5 @@ app.route("/v1/agents", agents);
 export default {
   port: 4000,
   fetch: app.fetch,
+  request: app.request,
 };
