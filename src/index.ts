@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
+import { openAPISpecs } from "hono-openapi";
 
 import { authVerify } from "./middlewares/auth";
 import { verifyUser } from "./middlewares/users";
@@ -10,6 +11,7 @@ import { verifyUser } from "./middlewares/users";
 import auth from "./routes/auth";
 import users from "./routes/users";
 import agents from "./routes/agents";
+import apiDocs from "./routes/api-docs";
 
 const app = new Hono();
 
@@ -18,6 +20,31 @@ app.use(logger());
 app.use(cors());
 app.use(csrf());
 app.use(secureHeaders());
+
+// OpenAPI Documentation
+app.get(
+  "/v1-api-docs",
+  openAPISpecs(app, {
+    documentation: {
+      info: {
+        title: "Tomodachiai API",
+        version: "1.0.0",
+        description: "API for Tomodachiai",
+      },
+      components: {
+        securitySchemes: {
+          "Bearer Auth": {
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+          },
+        },
+      },
+    },
+  })
+);
+
+app.route("/", apiDocs);
 
 // Custom middlewares
 app.use("/v1/*", authVerify);

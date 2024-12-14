@@ -1,4 +1,5 @@
 import { z } from "zod";
+// import "zod-openapi/extend";
 
 export const createAgentSchema = z.object({
   name: z.string().min(3).max(20),

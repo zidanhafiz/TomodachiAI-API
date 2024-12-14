@@ -69,7 +69,22 @@ const getUserById = async (id: string) => {
 
 const updateUser = async (id: string, data: Partial<User>) => {
   try {
-    const updatedUser = await prisma.user.update({ where: { id }, data });
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        credits: true,
+        isVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
     return updatedUser;
   } catch (error) {
     console.error(error);
