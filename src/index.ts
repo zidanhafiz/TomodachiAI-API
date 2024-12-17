@@ -18,7 +18,7 @@ const app = new Hono();
 // Middlewares
 app.use(logger());
 app.use(cors());
-app.use(csrf());
+app.use(csrf({ origin: "http://localhost:3000" }));
 app.use(secureHeaders());
 
 // OpenAPI Documentation

@@ -119,11 +119,11 @@ const listUsers = async ({
     const filter = {} as Prisma.UserWhereInput;
 
     if (name) {
-      filter.OR = [{ firstName: { contains: name } }, { lastName: { contains: name } }];
+      filter.OR = [{ firstName: { contains: name, mode: "insensitive" } }, { lastName: { contains: name, mode: "insensitive" } }];
     }
 
     if (email) {
-      filter.email = { contains: email };
+      filter.email = { contains: email, mode: "insensitive" };
     }
 
     if (role) {
