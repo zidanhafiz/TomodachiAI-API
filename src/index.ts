@@ -49,6 +49,7 @@ app.route("/", apiDocs);
 // Custom middlewares
 app.use("/v1/*", authVerify);
 app.use("/v1/users/:id", verifyUser);
+app.use("/v1/users/:id/*", verifyUser);
 
 // Routes
 app.route("/auth", auth);

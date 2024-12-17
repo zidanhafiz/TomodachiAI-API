@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import userModels from "../models/user";
 import { toSnakeCase } from "../utils/snakeCaseFormat";
 import { validator as zValidator } from "hono-openapi/zod";
-import { deleteUserSchema, getUserSchema, listUsersSchema, updateUserSchema } from "../utils/schemas/userSchemas";
+import { addCreditsSchema, deleteUserSchema, getUserSchema, listUsersSchema, updateUserSchema } from "../utils/schemas/userSchemas";
 import { createDescription } from "../utils/openApiUtils";
 
 const users = new Hono<{
@@ -80,6 +80,32 @@ const users = new Hono<{
       } catch (error) {
         console.error(error);
         return c.json({ error: "Failed to get users" }, 500);
+      }
+    }
+  )
+  .post(
+    "/:id/credits/add",
+    createDescription(["User Credits"], "Add credits to a user", addCreditsSchema.successResponse, addCreditsSchema.errorResponse, true),
+    zValidator("json", addCreditsSchema.requestBody),
+    async (c) => {
+      try {
+        const userId = c.get("user_id");
+        const { credits } = c.req.valid("json");
+
+        const user = await userModels.getUserById(userId);
+
+        if (!user) {
+          return c.json({ error: "User not found" }, 404);
+        }
+
+        const updatedUser = await userModels.updateUser(userId, {
+          credits: user.credits + credits,
+        });
+
+        return c.json({ data: { previous_credits: user.credits, new_credits: updatedUser.credits } });
+      } catch (error) {
+        console.error(error);
+        return c.json({ error: "Failed to add credits" }, 500);
       }
     }
   );

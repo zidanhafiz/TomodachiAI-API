@@ -111,3 +111,18 @@ export const getUserSchema = {
     error: z.string().openapi({ example: "Failed to get user" }),
   }),
 };
+
+export const addCreditsSchema = {
+  requestBody: z.object({
+    credits: z.number().min(1).positive().openapi({ example: 100 }),
+  }),
+  successResponse: z.object({
+    data: z.object({
+      previous_credits: z.number().openapi({ example: 100 }),
+      new_credits: z.number().openapi({ example: 200 }),
+    }),
+  }),
+  errorResponse: z.object({
+    error: z.string().openapi({ example: "Failed to add credits" }),
+  }),
+};

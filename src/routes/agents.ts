@@ -6,6 +6,7 @@ import agentModels from "../models/agent";
 import { createAgentSchema, deleteAgentSchema, getAgentSchema, listAgentsSchema, updateAgentSchema } from "../utils/schemas/agentSchemas";
 import { createDescription } from "../utils/openApiUtils";
 import { toSnakeCase } from "../utils/snakeCaseFormat";
+import { deductCredits } from "../utils/userUtils";
 
 const agents = new Hono<{
   Variables: {
@@ -36,6 +37,8 @@ const agents = new Hono<{
           name,
           userId,
         });
+
+        await deductCredits(userId);
 
         return c.json({ data: agentDB });
       } catch (error) {

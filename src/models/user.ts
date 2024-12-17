@@ -22,6 +22,7 @@ const createUser = async ({
         firstName,
         lastName,
         password,
+        credits: 100,
         role,
       },
     });

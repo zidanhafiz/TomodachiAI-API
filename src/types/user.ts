@@ -6,6 +6,7 @@ export type User = {
   role: "ADMIN" | "USER";
   password?: string;
   refreshToken: string;
+  credits: number;
   createdAt?: Date;
   updatedAt?: Date;
 };
