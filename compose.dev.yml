@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: development
+    container_name: tomodachiai-api-dev
     ports:
       - 4000:4000
     env_file:
