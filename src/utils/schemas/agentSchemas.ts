@@ -172,7 +172,18 @@ export const deleteAgentSchema = {
 export const addKnowledgeSchema = {
   requestBody: z.object({
     url: z.string().optional().openapi({ example: "https://example.com" }),
-    file: z.instanceof(File).optional().openapi({ format: "binary" }),
+    file: z
+      .instanceof(File)
+      .refine((file) => ["application/pdf"].includes(file.type), {
+        message: "File must be a PDF",
+        path: ["file"],
+      })
+      .refine((file) => file.size <= 1024 * 1024 * 20, {
+        message: "File must be less than 20MB",
+        path: ["file"],
+      })
+      .optional()
+      .openapi({ format: "file", maximum: 1024 * 1024 * 20 }),
   }),
   successResponse: z.object({
     data: z.object({
@@ -185,7 +196,17 @@ export const addKnowledgeSchema = {
 
 export const addAvatarSchema = {
   requestBody: z.object({
-    file: z.instanceof(File).openapi({ format: "binary" }),
+    file: z
+      .instanceof(File)
+      .refine((file) => ["image/jpeg", "image/png", "image/jpg"].includes(file.type), {
+        message: "File must be a JPEG, PNG or JPG image",
+        path: ["file"],
+      })
+      .refine((file) => file.size <= 1024 * 1024 * 2, {
+        message: "File must be less than 2MB",
+        path: ["file"],
+      })
+      .openapi({ format: "file", maximum: 1024 * 1024 * 2 }),
   }),
   successResponse: z.object({
     data: z.object({
@@ -199,7 +220,7 @@ export const addAvatarSchema = {
 export const createPromptTemplatesSchema = {
   requestBody: z
     .object({
-      name: z.string().default("Lisa").openapi({ example: "Lisa" }),
+      name: z.string().openapi({ example: "Lisa" }),
       personality: z
         .array(z.string())
         .default(["funny", "cute", "smart"])
@@ -215,6 +236,6 @@ export const createPromptTemplatesSchema = {
       message: "Role is required when template is template",
       path: ["role"],
     }),
-  successResponse: z.object({ data: z.string().openapi({ example: "You are a helpful assistant" }) }),
+  successResponse: z.object({ data: z.string().openapi({ example: "You are a helpful assistant..." }) }),
   errorResponse: z.object({ error: z.string().openapi({ example: "Failed to get prompt templates" }) }),
 };

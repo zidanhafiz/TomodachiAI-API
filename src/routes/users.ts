@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import userModels from "../models/user";
 import { toSnakeCase } from "../utils/snakeCaseFormat";
-import { validator as zValidator } from "hono-openapi/zod";
+import { zValidator } from "../middlewares/validator";
 import { addCreditsSchema, deleteUserSchema, getUserSchema, listUsersSchema, updateUserSchema } from "../utils/schemas/userSchemas";
 import { createDescription } from "../utils/openApiUtils";
 

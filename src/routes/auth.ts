@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { sign, UserJwtPayload, verify } from "hono/jwt";
-import { validator as zValidator } from "hono-openapi/zod";
+import { zValidator } from "../middlewares/validator";
 
 import userModels from "../models/user";
 import { loginSchema, refreshTokenSchema, signupSchema } from "../utils/schemas/userSchemas";

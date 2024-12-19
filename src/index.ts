@@ -49,14 +49,13 @@ app.route("/", apiDocs);
 
 // Custom middlewares
 app.use("/v1/*", authVerify);
-app.use("/v1/users/:id", verifyUser);
 app.use("/v1/users/:id/*", verifyUser);
 
 // Routes
 app.route("/auth", auth);
 app.route("/v1/users", users);
 app.route("/v1/agents", agents);
-app.route("/v1/prompt-templates", promptTemplates);
+app.route("/v1/generate-prompt-templates", promptTemplates);
 
 export default {
   port: 4000,

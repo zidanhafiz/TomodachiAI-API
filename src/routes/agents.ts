@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { validator as zValidator } from "hono-openapi/zod";
 import { ElevenLabsClient } from "elevenlabs";
 
+import { zValidator } from "../middlewares/validator";
 import agentModels from "../models/agent";
 import {
   addAvatarSchema,
@@ -16,6 +16,8 @@ import { createDescription } from "../utils/openApiUtils";
 import { toSnakeCase } from "../utils/snakeCaseFormat";
 import { deductCredits } from "../utils/userUtils";
 import { Agent } from "../types/agent";
+import { ZodError } from "zod";
+import { formatZodError } from "../utils/zodErrorUtils";
 
 const agents = new Hono<{
   Variables: {
@@ -184,7 +186,7 @@ const agents = new Hono<{
     }
   })
   .post(
-    "/:id/knowledge/add",
+    "/:id/knowledge",
     createDescription(["Agent Knowledge"], "Add knowledge to an agent", addKnowledgeSchema.successResponse, addKnowledgeSchema.errorResponse, true),
     zValidator("form", addKnowledgeSchema.requestBody),
     async (c) => {
@@ -232,7 +234,7 @@ const agents = new Hono<{
     }
   )
   .post(
-    "/:id/avatar/add",
+    "/:id/avatar",
     createDescription(["Agent Avatar"], "Add Avatar to an agent", addAvatarSchema.successResponse, addAvatarSchema.errorResponse, true),
     zValidator("form", addAvatarSchema.requestBody),
     async (c) => {
@@ -273,6 +275,11 @@ const agents = new Hono<{
         return c.json({ data: { ...agent, avatar: avatar.avatar_url } });
       } catch (error) {
         console.error(error);
+
+        if (error instanceof ZodError) {
+          return c.json({ error: formatZodError(error) }, 400);
+        }
+
         return c.json({ error: "Failed to add avatar" }, 500);
       }
     }
