@@ -12,6 +12,7 @@ import auth from "./routes/auth";
 import users from "./routes/users";
 import agents from "./routes/agents";
 import apiDocs from "./routes/api-docs";
+import promptTemplates from "./routes/prompt-templates";
 
 const app = new Hono();
 
@@ -55,6 +56,7 @@ app.use("/v1/users/:id/*", verifyUser);
 app.route("/auth", auth);
 app.route("/v1/users", users);
 app.route("/v1/agents", agents);
+app.route("/v1/prompt-templates", promptTemplates);
 
 export default {
   port: 4000,

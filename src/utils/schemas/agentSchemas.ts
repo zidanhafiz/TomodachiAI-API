@@ -95,6 +95,12 @@ const widgetConfigSchema = z.object({
 export const createAgentSchema = {
   requestBody: z.object({
     name: z.string().min(3).max(20).openapi({ example: "Lisa" }),
+    role: z.enum(["ASSISTANT", "FRIEND", "GIRLFRIEND", "BOYFRIEND", "HUSBAND", "WIFE"]).optional().openapi({ example: "FRIEND" }),
+    personality: z
+      .array(z.string())
+      .optional()
+      .openapi({ example: ["funny", "cute", "smart"] }),
+    prompt: z.string().min(3).openapi({ example: "You are a helpful assistant" }),
     conversation_config: basicConversationConfigSchema,
   }),
   successResponse: z.object({
@@ -132,8 +138,14 @@ export const getAgentSchema = {
 
 export const updateAgentSchema = {
   requestBody: z.object({
-    name: z.string().min(3).max(20).openapi({ example: "Lisa" }),
-    conversation_config: advancedConversationConfigSchema,
+    name: z.string().max(20).openapi({ example: "Lisa" }),
+    role: z.enum(["ASSISTANT", "FRIEND", "GIRLFRIEND", "BOYFRIEND", "HUSBAND", "WIFE"]).optional().openapi({ example: "FRIEND" }),
+    personality: z
+      .array(z.string())
+      .optional()
+      .openapi({ example: ["funny", "cute", "smart"] }),
+    prompt: z.string().optional().openapi({ example: "You are a helpful assistant" }),
+    conversation_config: advancedConversationConfigSchema.optional(),
     platform_settings: z
       .object({
         widget: widgetConfigSchema,
@@ -155,4 +167,54 @@ export const updateAgentSchema = {
 export const deleteAgentSchema = {
   successResponse: z.object({ data: z.string().openapi({ example: "Agent deleted" }) }),
   errorResponse: z.object({ error: z.string().openapi({ example: "Failed to delete agent" }) }),
+};
+
+export const addKnowledgeSchema = {
+  requestBody: z.object({
+    url: z.string().optional().openapi({ example: "https://example.com" }),
+    file: z.instanceof(File).optional().openapi({ format: "binary" }),
+  }),
+  successResponse: z.object({
+    data: z.object({
+      name: z.string().openapi({ example: "Lisa" }),
+      conversation_config: advancedConversationConfigSchema,
+    }),
+  }),
+  errorResponse: z.object({ error: z.string().openapi({ example: "Failed to add knowledge" }) }),
+};
+
+export const addAvatarSchema = {
+  requestBody: z.object({
+    file: z.instanceof(File).openapi({ format: "binary" }),
+  }),
+  successResponse: z.object({
+    data: z.object({
+      name: z.string().openapi({ example: "Lisa" }),
+      conversation_config: advancedConversationConfigSchema,
+    }),
+  }),
+  errorResponse: z.object({ error: z.string().openapi({ example: "Failed to add knowledge" }) }),
+};
+
+export const createPromptTemplatesSchema = {
+  requestBody: z
+    .object({
+      name: z.string().default("Lisa").openapi({ example: "Lisa" }),
+      personality: z
+        .array(z.string())
+        .default(["funny", "cute", "smart"])
+        .openapi({ example: ["funny", "cute", "smart"] }),
+      role: z.enum(["friend", "girlfriend", "boyfriend", "husband", "wife"]).default("friend").openapi({ example: "friend" }),
+      template: z.enum(["custom", "template"]).default("custom").openapi({ example: "custom" }),
+    })
+    .refine((data) => (data.template === "custom" ? data.personality && data.role : true), {
+      message: "Personality and role are required when template is custom",
+      path: ["personality", "role"],
+    })
+    .refine((data) => (data.template === "template" ? data.role : true), {
+      message: "Role is required when template is template",
+      path: ["role"],
+    }),
+  successResponse: z.object({ data: z.string().openapi({ example: "You are a helpful assistant" }) }),
+  errorResponse: z.object({ error: z.string().openapi({ example: "Failed to get prompt templates" }) }),
 };

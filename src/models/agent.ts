@@ -15,7 +15,7 @@ export const getAgentById = async (id: string, userId: string) => {
   }
 };
 
-export const createAgent = async (agent: Agent) => {
+export const createAgent = async (agent: Agent) => { 
   try {
     const agentDB = await prisma.agent.create({
       data: {

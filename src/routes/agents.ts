@@ -3,10 +3,19 @@ import { validator as zValidator } from "hono-openapi/zod";
 import { ElevenLabsClient } from "elevenlabs";
 
 import agentModels from "../models/agent";
-import { createAgentSchema, deleteAgentSchema, getAgentSchema, listAgentsSchema, updateAgentSchema } from "../utils/schemas/agentSchemas";
+import {
+  addAvatarSchema,
+  addKnowledgeSchema,
+  createAgentSchema,
+  deleteAgentSchema,
+  getAgentSchema,
+  listAgentsSchema,
+  updateAgentSchema,
+} from "../utils/schemas/agentSchemas";
 import { createDescription } from "../utils/openApiUtils";
 import { toSnakeCase } from "../utils/snakeCaseFormat";
 import { deductCredits } from "../utils/userUtils";
+import { Agent } from "../types/agent";
 
 const agents = new Hono<{
   Variables: {
@@ -19,12 +28,14 @@ const agents = new Hono<{
     zValidator("json", createAgentSchema.requestBody),
     async (c) => {
       try {
-        const { name, conversation_config } = c.req.valid("json");
+        const { name, conversation_config, prompt, role, personality } = c.req.valid("json");
         const userId = c.get("user_id");
 
         const elevenLabsClient = new ElevenLabsClient({
           apiKey: process.env.ELEVENLABS_API_KEY || "",
         });
+
+        conversation_config.agent.prompt.prompt = prompt;
 
         const agent = await elevenLabsClient.conversationalAi.createAgent({
           name,
@@ -35,7 +46,10 @@ const agents = new Hono<{
           id: agent.agent_id,
           language: conversation_config.agent.language,
           name,
+          prompt,
           userId,
+          role: role || "FRIEND",
+          personality: personality || [],
         });
 
         await deductCredits(userId);
@@ -91,7 +105,7 @@ const agents = new Hono<{
 
       const agent = await elevenApiClient.conversationalAi.getAgent(id);
 
-      return c.json({ data: agent });
+      return c.json({ data: { ...agent, avatar: agentDB.avatar } });
     } catch (error) {
       console.error(error);
       return c.json({ error: "Failed to get agent" }, 500);
@@ -103,7 +117,7 @@ const agents = new Hono<{
     zValidator("json", updateAgentSchema.requestBody),
     async (c) => {
       try {
-        const { name, conversation_config, platform_settings } = c.req.valid("json");
+        const { name, conversation_config, platform_settings, role, personality, prompt } = c.req.valid("json");
         const { id } = c.req.param();
         const userId = c.get("user_id");
 
@@ -117,19 +131,27 @@ const agents = new Hono<{
           apiKey: process.env.ELEVENLABS_API_KEY || "",
         });
 
+        if (conversation_config && prompt) {
+          conversation_config.agent.prompt.prompt = prompt;
+        }
+
         const agent = await elevenApiClient.conversationalAi.updateAgent(id, {
           name,
           conversation_config,
           platform_settings,
         });
 
-        await agentModels.updateAgent(id, userId, {
-          name,
-          language: conversation_config.agent.language,
-          avatar: platform_settings?.widget?.avatar?.url,
-        });
+        const data = { name } as Partial<Agent>;
 
-        return c.json({ data: agent });
+        if (conversation_config) data.language = conversation_config.agent.language;
+        if (platform_settings) data.avatar = platform_settings?.widget?.avatar?.url;
+        if (role) data.role = role;
+        if (personality) data.personality = personality;
+        if (prompt) data.prompt = prompt;
+
+        await agentModels.updateAgent(id, userId, data);
+
+        return c.json({ data: { ...agent, avatar: agentDB.avatar } });
       } catch (error) {
         console.error(error);
         return c.json({ error: "Failed to get agent" }, 500);
@@ -160,6 +182,100 @@ const agents = new Hono<{
       console.error(error);
       return c.json({ error: "Failed to delete agent" }, 500);
     }
-  });
+  })
+  .post(
+    "/:id/knowledge/add",
+    createDescription(["Agent Knowledge"], "Add knowledge to an agent", addKnowledgeSchema.successResponse, addKnowledgeSchema.errorResponse, true),
+    zValidator("form", addKnowledgeSchema.requestBody),
+    async (c) => {
+      try {
+        const { url, file } = c.req.valid("form");
+        const { id } = c.req.param();
+        const userId = c.get("user_id");
+
+        const agentDB = await agentModels.getAgentById(id, userId);
+
+        if (!agentDB) {
+          return c.json({ error: "Agent not found" }, 404);
+        }
+
+        const elevenApiClient = new ElevenLabsClient({
+          apiKey: process.env.ELEVENLABS_API_KEY || "",
+        });
+
+        const knowledgeBase = await elevenApiClient.conversationalAi.addToAgentKnowledgeBase(id, {
+          url,
+          file,
+        });
+
+        const agent = await elevenApiClient.conversationalAi.updateAgent(id, {
+          conversation_config: {
+            agent: {
+              prompt: {
+                knowledge_base: [
+                  {
+                    type: file ? "file" : "url",
+                    name: file ? file.name : url,
+                    id: knowledgeBase.id,
+                  },
+                ],
+              },
+            },
+          },
+        });
+
+        return c.json({ data: { ...agent, avatar: agentDB.avatar } });
+      } catch (error) {
+        console.error(error);
+        return c.json({ error: "Failed to add knowledge" }, 500);
+      }
+    }
+  )
+  .post(
+    "/:id/avatar/add",
+    createDescription(["Agent Avatar"], "Add Avatar to an agent", addAvatarSchema.successResponse, addAvatarSchema.errorResponse, true),
+    zValidator("form", addAvatarSchema.requestBody),
+    async (c) => {
+      try {
+        const { file } = c.req.valid("form");
+        const { id } = c.req.param();
+        const userId = c.get("user_id");
+
+        const agentDB = await agentModels.getAgentById(id, userId);
+
+        if (!agentDB) {
+          return c.json({ error: "Agent not found" }, 404);
+        }
+
+        const elevenApiClient = new ElevenLabsClient({
+          apiKey: process.env.ELEVENLABS_API_KEY || "",
+        });
+
+        const avatar = await elevenApiClient.conversationalAi.postAgentAvatar(id, {
+          avatar_file: file,
+        });
+
+        const agent = await elevenApiClient.conversationalAi.updateAgent(id, {
+          platform_settings: {
+            widget: {
+              avatar: {
+                type: "image",
+                url: avatar.avatar_url,
+              },
+            },
+          },
+        });
+
+        await agentModels.updateAgent(id, userId, {
+          avatar: avatar.avatar_url,
+        });
+
+        return c.json({ data: { ...agent, avatar: avatar.avatar_url } });
+      } catch (error) {
+        console.error(error);
+        return c.json({ error: "Failed to add avatar" }, 500);
+      }
+    }
+  );
 
 export default agents;
