@@ -4,6 +4,21 @@ WORKDIR /app
 
 COPY package.json bun.lockb ./
 
+# Development
+FROM base as development
+
+ENV NODE_ENV=development
+
+RUN bun install
+
+COPY . .
+
+RUN bunx prisma generate 
+
+EXPOSE 4000
+
+CMD ["bun", "run", "dev"]
+
 # Production
 FROM base as production
 
@@ -19,19 +34,4 @@ RUN bunx prisma generate
 
 RUN bun build src/index.ts --outdir=dist --target=bun
 
-CMD ["bun", "run", "start"]
-
-# Development
-FROM base as development
-
-ENV NODE_ENV=development
-
-RUN bun install
-
-COPY . .
-
-RUN bunx prisma generate 
-
-EXPOSE 4000
-
-CMD ["bun", "run", "dev"]
+CMD ["sh", "-c", "bunx prisma migrate deploy && bun run start"]
