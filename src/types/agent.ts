@@ -4,6 +4,7 @@ export type Agent = {
   language: string;
   avatar?: string;
   personality?: string[];
+  status?: "IDLE" | "PROCESSING" | "ERROR";
   role?: "ASSISTANT" | "FRIEND" | "GIRLFRIEND" | "BOYFRIEND" | "HUSBAND" | "WIFE";
   prompt?: string;
   createdAt?: Date;

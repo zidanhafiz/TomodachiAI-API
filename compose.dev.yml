@@ -8,13 +8,14 @@ services:
       target: development
     container_name: tomodachiai-api-dev
     ports:
-      - 4000:4000
+      - 4000:3000
     env_file:
       - .env
     environment:
       - DATABASE_URL=${DOCKER_DATABASE_URL}
     depends_on:
       - db
+      - redis
     volumes:
       - .:/app
     develop:
@@ -41,5 +42,15 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis/redis-stack
+    container_name: redis
+    ports:
+      - 6379:6379
+      - 8001:8001
+    volumes:
+      - redis_data:/data
+
 volumes:
   db_data:
+  redis_data:

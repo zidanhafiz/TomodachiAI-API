@@ -46,16 +46,23 @@ enum AgentRole {
   WIFE
 }
 
+enum AgentStatus {
+  IDLE
+  PROCESSING
+  ERROR
+}
+
 model Agent {
-  id          String     @id
-  name        String     @db.VarChar(100)
-  language    String     @db.VarChar(100)
-  avatar      String?    @db.Text
-  personality String[]   @db.Text
+  id          String      @id
+  name        String      @db.VarChar(100)
+  language    String      @db.VarChar(100)
+  avatar      String?     @db.Text
+  personality String[]    @db.Text
   role        AgentRole?
-  prompt      String?    @db.Text
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  prompt      String?     @db.Text
+  status      AgentStatus @default(IDLE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String

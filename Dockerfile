@@ -1,11 +1,13 @@
-FROM oven/bun:alpine as base
+FROM oven/bun:alpine AS base
 
 WORKDIR /app
 
 COPY package.json bun.lockb ./
 
 # Development
-FROM base as development
+FROM base AS development
+
+COPY prisma ./prisma
 
 ENV NODE_ENV=development
 
@@ -20,7 +22,7 @@ EXPOSE 4000
 CMD ["bun", "run", "dev"]
 
 # Production
-FROM base as production
+FROM base AS production
 
 ENV NODE_ENV=production
 
