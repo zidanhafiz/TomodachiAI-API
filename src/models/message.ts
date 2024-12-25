@@ -39,10 +39,42 @@ const updateMessage = async (id: string, messageData: Partial<Message>) => {
   }
 };
 
+const getMessageById = async (id: string, agentId: string) => {
+  try {
+    const message = await prisma.message.findUnique({ where: { id, agentId } });
+    return message;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+const deleteMessage = async (id: string, agentId: string) => {
+  try {
+    const message = await prisma.message.delete({ where: { id, agentId } });
+    return message;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+const clearAllMessages = async (agentId: string) => {
+  try {
+    await prisma.message.deleteMany({ where: { agentId } });
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 const messageModels = {
   listMessages,
   createMessage,
   updateMessage,
+  getMessageById,
+  deleteMessage,
+  clearAllMessages,
 };
 
 export default messageModels;

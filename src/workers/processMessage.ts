@@ -4,43 +4,40 @@ import { Queue, Worker } from "bullmq";
 import openai from "../utils/openai";
 import agentModels from "../models/agent";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
+import { Message } from "@prisma/client";
 
 const chatMessagesTopic = "chat-messages";
 const agentStatusTopic = "agent-status";
 
-const queue = new Queue<{ messageId: string; userId: string }>("incoming-message", {
+type ProcessMessageData = {
+  agentId: string;
+  messageId: string;
+  userId: string;
+};
+
+const messageQueue = new Queue<ProcessMessageData>("incoming-message", {
   connection: {
     host: "redis",
     port: 6379,
   },
 });
 
-const worker = new Worker<{ messageId: string; userId: string }>(
+const worker = new Worker<ProcessMessageData, Message | null>(
   "incoming-message",
   async (job) => {
     if (job.name === "process-message") {
-      const { messageId, userId } = job.data;
+      const { messageId, userId, agentId } = job.data;
 
-      const message = await messageModels.updateMessage(messageId, {
-        status: "READ",
-      });
+      const message = await messageModels.updateMessage(messageId, { status: "READ" });
+      const agent = await agentModels.updateAgent(agentId, userId, { status: "PROCESSING" });
 
       server.publish(chatMessagesTopic, JSON.stringify({ eventName: chatMessagesTopic, data: message }));
-
-      const agent = await agentModels.getAgentById(message.agentId, userId);
-
-      if (!agent || !agent.prompt) {
-        return;
-      }
-
-      await agentModels.updateAgent(message.agentId, userId, { status: "PROCESSING" });
-
-      server.publish(agentStatusTopic, JSON.stringify({ eventName: agentStatusTopic, agentId: message.agentId, status: "PROCESSING" }));
+      server.publish(agentStatusTopic, JSON.stringify({ eventName: agentStatusTopic, agentId, status: "PROCESSING" }));
 
       const prevMessages = await messageModels.listMessages({ agentId: message.agentId, order: "desc", page: 1, limit: 10 });
 
       const messages = [
-        { role: "system", content: agent.prompt },
+        { role: "developer", content: agent.prompt },
         ...prevMessages.reverse().map((msg) => ({
           role: msg.from === "USER" ? "user" : "assistant",
           content: msg.body,
@@ -58,11 +55,9 @@ const worker = new Worker<{ messageId: string; userId: string }>(
         from: "agent",
       });
 
-      await agentModels.updateAgent(message.agentId, userId, { status: "IDLE" });
-
-      server.publish(agentStatusTopic, JSON.stringify({ eventName: agentStatusTopic, agentId: message.agentId, status: "IDLE" }));
-      server.publish(chatMessagesTopic, JSON.stringify({ eventName: chatMessagesTopic, data: resMessage }));
+      return resMessage;
     }
+    return null;
   },
   {
     connection: {
@@ -70,19 +65,37 @@ const worker = new Worker<{ messageId: string; userId: string }>(
       port: 6379,
       maxRetriesPerRequest: null,
     },
+    removeOnComplete: {
+      age: 600, // keep up to 10 minutes
+      count: 100, // keep up to 100 jobs
+    },
+    removeOnFail: {
+      age: 3600, // keep up to 1 hou
+    },
   }
 );
 
 worker.on("progress", (job, progress) => {
-  console.log(`Job ${job?.id} with ${job?.data.messageId} is ${progress}% complete`);
+  if (job.name === "process-message") {
+    console.log(`Job ${job?.id} with ${job?.data.messageId} is ${progress}% complete`);
+  }
 });
 
-worker.on("completed", (job) => {
-  console.log(`Job ${job?.id} with ${job?.data.messageId} completed`);
+worker.on("completed", async (job, result) => {
+  if (job.name === "process-message") {
+    console.log(`Job ${job?.id} with ${job?.data.messageId} completed`);
+
+    await agentModels.updateAgent(job.data.agentId, job.data.userId, { status: "IDLE" });
+
+    server.publish(agentStatusTopic, JSON.stringify({ eventName: agentStatusTopic, agentId: job.data.agentId, status: "IDLE" }));
+    server.publish(chatMessagesTopic, JSON.stringify({ eventName: chatMessagesTopic, data: result }));
+  }
 });
 
 worker.on("failed", (job, err) => {
-  console.log(`Job ${job?.id} with ${job?.data.messageId} failed with error: ${err}`);
+  if (job && job.name === "process-message") {
+    console.log(`Job ${job?.id} with ${job?.data.messageId} failed with error: ${err}`);
+  }
 });
 
-export { queue };
+export { messageQueue };

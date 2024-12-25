@@ -38,3 +38,39 @@ export const createMessageSchema = {
     error: z.string().openapi({ example: "Failed to create message" }),
   }),
 };
+
+export const getMessageById = {
+  successResponse: z.object({
+    data: messageSchema,
+  }),
+  errorResponse: z.object({
+    error: z.string().openapi({ example: "Failed to get message" }),
+  }),
+};
+
+export const deleteMessage = {
+  successResponse: z.object({
+    data: z.string().openapi({ example: "Success delete message <messageId>" }),
+  }),
+  errorResponse: z.object({
+    error: z.string().openapi({ example: "Failed to delete message" }),
+  }),
+};
+
+export const markAsReadSchema = {
+  successResponse: z.object({
+    data: z.string().openapi({ example: "Success marked message <messageId> as READ" }),
+  }),
+  errorResponse: z.object({
+    error: z.string().openapi({ example: "Failed to mark message as read" }),
+  }),
+};
+
+export const clearAllMessages = {
+  successResponse: z.object({
+    data: z.string().openapi({ example: "Success clear all messages on Agent ID: 123" }),
+  }),
+  errorResponse: z.object({
+    error: z.string().openapi({ example: "Failed to clear all messages" }),
+  }),
+};

@@ -1,9 +1,11 @@
 import { createMiddleware } from "hono/factory";
 import agentModels from "../models/agent";
+import { Agent } from "@prisma/client";
 
 const verifyUserAgent = createMiddleware<{
   Variables: {
     user_id: string;
+    agent: Agent;
   };
 }>(async (c, next) => {
   const agentId = c.req.param("agentId");
@@ -22,6 +24,8 @@ const verifyUserAgent = createMiddleware<{
   if (!agentDB) {
     return c.json({ error: "Agent not found" }, 404);
   }
+
+  c.set("agent", agentDB);
 
   await next();
 });

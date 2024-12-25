@@ -18,7 +18,6 @@ import { deductCredits } from "../utils/userUtils";
 import { Agent } from "../types/agent";
 import { ZodError } from "zod";
 import { formatZodError } from "../utils/zodErrorUtils";
-import messages from "./messages";
 
 const agents = new Hono<{
   Variables: {
