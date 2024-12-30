@@ -17,8 +17,8 @@ type ProcessMessageData = {
 
 const messageQueue = new Queue<ProcessMessageData>("incoming-message", {
   connection: {
-    host: "redis",
-    port: 6379,
+    host: process.env.REDIS_HOST || "localhost",
+    port: parseInt(process.env.REDIS_PORT || "6379"),
   },
 });
 
@@ -63,8 +63,8 @@ const worker = new Worker<ProcessMessageData, Message | null>(
   },
   {
     connection: {
-      host: "redis",
-      port: 6379,
+      host: process.env.REDIS_HOST || "localhost",
+      port: parseInt(process.env.REDIS_PORT || "6379"),
       maxRetriesPerRequest: null,
     },
     removeOnComplete: {
