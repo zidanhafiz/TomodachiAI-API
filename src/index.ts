@@ -22,33 +22,6 @@ const app = new Hono();
 
 const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket>();
 
-export const server = Bun.serve({
-  fetch: app.fetch,
-  websocket,
-});
-
-// Middlewares
-app.use(logger());
-app.use(cors({ origin: [process.env.FRONTEND_URL || "", "http://127.0.0.1:5500"] }));
-app.use(secureHeaders());
-
-// OpenAPI Documentation
-app.get("/v1-api-docs", createOpenApiDocs(app));
-app.route("/", apiDocs);
-
-// Custom middlewares
-app.use("/v1/*", authVerify);
-app.use("/v1/users/:id/*", verifyUser);
-
-// Routes
-app.route("/auth", auth);
-app.route("/v1/users", users);
-app.route("/v1/agents", agents);
-app.route("/v1/agents", messages);
-app.route("/v1/generate-prompt-templates", promptTemplates);
-app.route("/v1/voices", voices);
-app.route("/v1/tts", tts);
-
 app.get(
   "/ws",
   upgradeWebSocket((c) => {
@@ -67,5 +40,33 @@ app.get(
     };
   })
 );
+
+export const server = Bun.serve({
+  fetch: app.fetch,
+  websocket,
+  port: 3001
+});
+
+// Middlewares
+app.use(logger());
+app.use(cors({ origin: [process.env.FRONTEND_URL || ""] }));
+app.use(secureHeaders());
+
+// OpenAPI Documentation
+app.get("/v1-api-docs", createOpenApiDocs(app));
+app.route("/", apiDocs);
+
+// Custom middlewares
+app.use("/v1/*", authVerify);
+app.use("/v1/users/:id/*", verifyUser);
+
+// Routes
+app.route("/auth", auth);
+app.route("/v1/users", users);
+app.route("/v1/agents", agents);
+app.route("/v1/agents", messages);
+app.route("/v1/generate-prompt-templates", promptTemplates);
+app.route("/v1/voices", voices);
+app.route("/v1/tts", tts);
 
 export default app;
