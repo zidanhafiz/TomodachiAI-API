@@ -16,6 +16,7 @@ import apiDocs from "./routes/api-docs";
 import promptTemplates from "./routes/prompt-templates";
 import messages from "./routes/messages";
 import voices from "./routes/voices";
+import tts from "./routes/tts";
 
 const app = new Hono();
 
@@ -46,6 +47,7 @@ app.route("/v1/agents", agents);
 app.route("/v1/agents", messages);
 app.route("/v1/generate-prompt-templates", promptTemplates);
 app.route("/v1/voices", voices);
+app.route("/v1/tts", tts);
 
 app.get(
   "/ws",

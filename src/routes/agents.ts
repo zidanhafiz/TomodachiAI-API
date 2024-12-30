@@ -17,7 +17,6 @@ import { toSnakeCase } from "../utils/snakeCaseFormat";
 import { deductCredits } from "../utils/userUtils";
 import { ZodError } from "zod";
 import { formatZodError } from "../utils/zodErrorUtils";
-import { Agent } from "@prisma/client";
 
 const agents = new Hono<{
   Variables: {
