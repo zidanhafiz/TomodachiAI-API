@@ -126,3 +126,18 @@ export const addCreditsSchema = {
     error: z.string().openapi({ example: "Failed to add credits" }),
   }),
 };
+
+export const deductCreditsSchema = {
+  requestBody: z.object({
+    credits: z.number().min(1).positive().openapi({ example: 100 }),
+  }),
+  successResponse: z.object({
+    data: z.object({
+      previous_credits: z.number().openapi({ example: 100 }),
+      new_credits: z.number().openapi({ example: 0 }),
+    }),
+  }),
+  errorResponse: z.object({
+    error: z.string().openapi({ example: "Failed to deduct credits" }),
+  }),
+};

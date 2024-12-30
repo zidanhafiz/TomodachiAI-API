@@ -17,6 +17,7 @@ import { toSnakeCase } from "../utils/snakeCaseFormat";
 import { deductCredits } from "../utils/userUtils";
 import { ZodError } from "zod";
 import { formatZodError } from "../utils/zodErrorUtils";
+import { Agent } from "@prisma/client";
 
 const agents = new Hono<{
   Variables: {
@@ -41,7 +42,7 @@ const agents = new Hono<{
           conversation_config,
         });
 
-        const agentDB = await agentModels.createAgent({
+        const data = {
           id: agent.agent_id,
           language: conversation_config.agent.language,
           name,
@@ -50,9 +51,11 @@ const agents = new Hono<{
           role: role || "FRIEND",
           personality: personality || [],
           voiceId: conversation_config.tts.voice_id,
-        });
+        } as Agent;
 
-        await deductCredits(userId);
+        const agentDB = await agentModels.createAgent(data);
+
+        await deductCredits(userId, 1);
 
         return c.json({ data: agentDB });
       } catch (error) {

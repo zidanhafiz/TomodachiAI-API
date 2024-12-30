@@ -5,6 +5,7 @@ import openai from "../utils/openai";
 import agentModels from "../models/agent";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import { Message } from "@prisma/client";
+import { deductCredits } from "../utils/userUtils";
 
 const chatMessagesTopic = "chat-messages";
 const agentStatusTopic = "agent-status";
@@ -56,6 +57,8 @@ const worker = new Worker<ProcessMessageData, Message | null>(
         body: completion.choices[0].message.content || "",
         from: "agent",
       });
+
+      await deductCredits(userId, 1);
 
       return resMessage;
     }

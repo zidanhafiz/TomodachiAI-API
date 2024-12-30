@@ -93,10 +93,9 @@ const widgetConfigSchema = z.object({
 export const createAgentSchema = {
   requestBody: z.object({
     name: z.string().min(3).max(20).openapi({ example: "Lisa" }),
-    role: z.enum(["ASSISTANT", "FRIEND", "GIRLFRIEND", "BOYFRIEND", "HUSBAND", "WIFE"]).optional().openapi({ example: "FRIEND" }),
+    role: z.enum(["ASSISTANT", "FRIEND", "GIRLFRIEND", "BOYFRIEND", "HUSBAND", "WIFE"]).openapi({ example: "FRIEND" }),
     personality: z
       .array(z.string())
-      .optional()
       .openapi({ example: ["funny", "cute", "smart"] }),
     conversation_config: basicConversationConfigSchema,
   }),

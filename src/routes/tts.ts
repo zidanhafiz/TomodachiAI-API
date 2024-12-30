@@ -4,6 +4,7 @@ import { zValidator } from "../middlewares/validator";
 import { createDescription } from "../utils/openApiUtils";
 import agentModels from "../models/agent";
 import { ElevenLabsClient } from "elevenlabs";
+import { deductCredits } from "../utils/userUtils";
 
 const tts = new Hono<{ Variables: { userId: string } }>().post(
   "/",
@@ -29,6 +30,8 @@ const tts = new Hono<{ Variables: { userId: string } }>().post(
         text,
         model_id: "eleven_multilingual_v2",
       });
+
+      await deductCredits(userId, 1);
 
       const chunks: Buffer[] = [];
 
