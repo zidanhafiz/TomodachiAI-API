@@ -15,9 +15,9 @@ import {
 import { createDescription } from "../utils/openApiUtils";
 import { toSnakeCase } from "../utils/snakeCaseFormat";
 import { deductCredits } from "../utils/userUtils";
-import { Agent } from "../types/agent";
 import { ZodError } from "zod";
 import { formatZodError } from "../utils/zodErrorUtils";
+import { Agent } from "@prisma/client";
 
 const agents = new Hono<{
   Variables: {
@@ -30,14 +30,12 @@ const agents = new Hono<{
     zValidator("json", createAgentSchema.requestBody),
     async (c) => {
       try {
-        const { name, conversation_config, prompt, role, personality } = c.req.valid("json");
+        const { name, conversation_config, role, personality } = c.req.valid("json");
         const userId = c.get("user_id");
 
         const elevenLabsClient = new ElevenLabsClient({
           apiKey: process.env.ELEVENLABS_API_KEY || "",
         });
-
-        conversation_config.agent.prompt.prompt = prompt;
 
         const agent = await elevenLabsClient.conversationalAi.createAgent({
           name,
@@ -48,10 +46,11 @@ const agents = new Hono<{
           id: agent.agent_id,
           language: conversation_config.agent.language,
           name,
-          prompt,
+          prompt: conversation_config.agent.prompt.prompt,
           userId,
           role: role || "FRIEND",
           personality: personality || [],
+          voiceId: conversation_config.tts.voice_id,
         });
 
         await deductCredits(userId);
@@ -119,7 +118,7 @@ const agents = new Hono<{
     zValidator("json", updateAgentSchema.requestBody),
     async (c) => {
       try {
-        const { name, conversation_config, platform_settings, role, personality, prompt } = c.req.valid("json");
+        const { name, conversation_config, role, personality } = c.req.valid("json");
         const { id } = c.req.param();
         const userId = c.get("user_id");
 
@@ -133,23 +132,19 @@ const agents = new Hono<{
           apiKey: process.env.ELEVENLABS_API_KEY || "",
         });
 
-        if (conversation_config && prompt) {
-          conversation_config.agent.prompt.prompt = prompt;
-        }
-
         const agent = await elevenApiClient.conversationalAi.updateAgent(id, {
           name,
           conversation_config,
-          platform_settings,
         });
 
-        const data = { name } as Partial<Agent>;
-
-        if (conversation_config) data.language = conversation_config.agent.language;
-        if (platform_settings) data.avatar = platform_settings?.widget?.avatar?.url;
-        if (role) data.role = role;
-        if (personality) data.personality = personality;
-        if (prompt) data.prompt = prompt;
+        const data = {
+          name,
+          language: conversation_config.agent.language,
+          role: role,
+          personality: personality,
+          prompt: conversation_config.agent.prompt.prompt,
+          voiceId: conversation_config.tts.voice_id,
+        };
 
         await agentModels.updateAgent(id, userId, data);
 

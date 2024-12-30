@@ -31,10 +31,12 @@ const worker = new Worker<ProcessMessageData, Message | null>(
       const message = await messageModels.updateMessage(messageId, { status: "READ" });
       const agent = await agentModels.updateAgent(agentId, userId, { status: "PROCESSING" });
 
-      server.publish(chatMessagesTopic, JSON.stringify({ eventName: chatMessagesTopic, data: message }));
-      server.publish(agentStatusTopic, JSON.stringify({ eventName: agentStatusTopic, agentId, status: "PROCESSING" }));
+      server.publish(`${chatMessagesTopic}-${userId}`, JSON.stringify({ eventName: chatMessagesTopic, data: message }));
+      server.publish(`${agentStatusTopic}-${userId}`, JSON.stringify({ eventName: agentStatusTopic, agentId, status: "PROCESSING" }));
 
       const prevMessages = await messageModels.listMessages({ agentId: message.agentId, order: "desc", page: 1, limit: 10 });
+
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       const messages = [
         { role: "developer", content: agent.prompt },
@@ -87,8 +89,8 @@ worker.on("completed", async (job, result) => {
 
     await agentModels.updateAgent(job.data.agentId, job.data.userId, { status: "IDLE" });
 
-    server.publish(agentStatusTopic, JSON.stringify({ eventName: agentStatusTopic, agentId: job.data.agentId, status: "IDLE" }));
-    server.publish(chatMessagesTopic, JSON.stringify({ eventName: chatMessagesTopic, data: result }));
+    server.publish(`${agentStatusTopic}-${job.data.userId}`, JSON.stringify({ eventName: agentStatusTopic, agentId: job.data.agentId, status: "IDLE" }));
+    server.publish(`${chatMessagesTopic}-${job.data.userId}`, JSON.stringify({ eventName: chatMessagesTopic, data: result }));
   }
 });
 

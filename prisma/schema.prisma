@@ -61,6 +61,7 @@ model Agent {
   role        AgentRole?
   prompt      String?     @db.Text
   status      AgentStatus @default(IDLE)
+  voiceId     String      @default("pFZP5JQG7iQjIQuC4Bku")
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 

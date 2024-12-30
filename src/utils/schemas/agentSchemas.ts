@@ -30,8 +30,8 @@ const basicConversationConfigSchema = z.object({
         ])
         .default("gpt-4o-mini")
         .openapi({ example: "gpt-4o-mini" }),
+      temperature: z.number().min(0).max(1).default(0.5).openapi({ example: 0.5 }),
     }),
-    temperature: z.number().min(0).max(1).default(0.5).openapi({ example: 0.5 }),
     first_message: z.string().min(3).max(1000).openapi({ example: "Hello, how can I help you today?" }),
     language: z.string().max(20).default("en").openapi({ example: "en" }),
   }),
@@ -63,21 +63,19 @@ const advancedConversationConfigSchema = z.object({
       temperature: z.number().min(0).max(1).default(0.5).openapi({ example: 0.5 }),
       knowledge_base: z
         .object({
-          type: z.enum(["file", "url"]).optional().openapi({ example: "file" }),
-          name: z.string().optional().openapi({ example: "knowledge-base.pdf" }),
-          id: z.string().optional().openapi({ example: "123" }),
+          type: z.enum(["file", "url"]).openapi({ example: "file" }),
+          name: z.string().openapi({ example: "knowledge-base.pdf" }),
+          id: z.string().openapi({ example: "123" }),
         })
         .optional(),
     }),
     first_message: z.string().min(3).max(1000).openapi({ example: "Hello, how can I help you today?" }),
     language: z.string().max(20).default("en").openapi({ example: "en" }),
   }),
-  tts: z
-    .object({
-      model_id: z.enum(["eleven_turbo_v2", "eleven_turbo_v2_5"]).default("eleven_turbo_v2").openapi({ example: "eleven_turbo_v2" }),
-      voice_id: z.string().min(3).max(20).openapi({ example: "21m00Tcm4TlvDq8ikWAM" }),
-    })
-    .optional(),
+  tts: z.object({
+    model_id: z.enum(["eleven_turbo_v2", "eleven_turbo_v2_5"]).default("eleven_turbo_v2").openapi({ example: "eleven_turbo_v2" }),
+    voice_id: z.string().min(3).max(20).openapi({ example: "21m00Tcm4TlvDq8ikWAM" }),
+  }),
   conversation: z
     .object({
       max_duration: z.number().min(300).max(1800).default(600).openapi({ example: 600 }),
@@ -87,8 +85,8 @@ const advancedConversationConfigSchema = z.object({
 
 const widgetConfigSchema = z.object({
   avatar: z.object({
-    type: z.enum(["image", "url"]).optional().default("image").openapi({ example: "image" }),
-    url: z.string().optional().openapi({ example: "https://example.com/avatar.png" }),
+    type: z.enum(["image", "url"]).default("image").openapi({ example: "image" }),
+    url: z.string().openapi({ example: "https://example.com/avatar.png" }),
   }),
 });
 
@@ -100,7 +98,6 @@ export const createAgentSchema = {
       .array(z.string())
       .optional()
       .openapi({ example: ["funny", "cute", "smart"] }),
-    prompt: z.string().min(3).openapi({ example: "You are a helpful assistant" }),
     conversation_config: basicConversationConfigSchema,
   }),
   successResponse: z.object({
@@ -139,18 +136,9 @@ export const getAgentSchema = {
 export const updateAgentSchema = {
   requestBody: z.object({
     name: z.string().max(20).openapi({ example: "Lisa" }),
-    role: z.enum(["ASSISTANT", "FRIEND", "GIRLFRIEND", "BOYFRIEND", "HUSBAND", "WIFE"]).optional().openapi({ example: "FRIEND" }),
-    personality: z
-      .array(z.string())
-      .optional()
-      .openapi({ example: ["funny", "cute", "smart"] }),
-    prompt: z.string().optional().openapi({ example: "You are a helpful assistant" }),
-    conversation_config: advancedConversationConfigSchema.optional(),
-    platform_settings: z
-      .object({
-        widget: widgetConfigSchema,
-      })
-      .optional(),
+    role: z.enum(["ASSISTANT", "FRIEND", "GIRLFRIEND", "BOYFRIEND", "HUSBAND", "WIFE"]).openapi({ example: "FRIEND" }),
+    personality: z.array(z.string()).openapi({ example: ["funny", "cute", "smart"] }),
+    conversation_config: advancedConversationConfigSchema,
   }),
   successResponse: z.object({
     data: z.object({

@@ -1,5 +1,4 @@
-import { Prisma } from "@prisma/client";
-import { Agent } from "../types/agent";
+import { Agent, Prisma } from "@prisma/client";
 import prisma from "../utils/prisma";
 
 export const getAgentById = async (id: string, userId: string) => {
@@ -15,14 +14,15 @@ export const getAgentById = async (id: string, userId: string) => {
   }
 };
 
-export const createAgent = async (agent: Agent) => { 
+export const createAgent = async (agent: Partial<Agent>) => {
   try {
     const agentDB = await prisma.agent.create({
       data: {
-        userId: agent.userId,
-        name: agent.name,
-        language: agent.language,
-        id: agent.id,
+        userId: agent.userId || "",
+        name: agent.name || "",
+        language: agent.language || "",
+        id: agent.id || "",
+        voiceId: agent.voiceId || "pFZP5JQG7iQjIQuC4Bku",
       },
     });
 

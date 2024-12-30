@@ -50,16 +50,17 @@ app.route("/v1/voices", voices);
 app.get(
   "/ws",
   upgradeWebSocket((c) => {
+    const userId = c.req.query("userId");
     return {
       onOpen(_, ws) {
-        ws.raw?.subscribe("chat-messages");
-        ws.raw?.subscribe("agent-status");
-        console.log("WebSocket connection opened");
+        ws.raw?.subscribe(`chat-messages-${userId}`);
+        ws.raw?.subscribe(`agent-status-${userId}`);
+        console.log(`WebSocket connection opened for user ${userId}`);
       },
       onClose: (_, ws) => {
-        ws.raw?.unsubscribe("chat-messages");
-        ws.raw?.unsubscribe("agent-status");
-        console.log("WebSocket connection closed");
+        ws.raw?.unsubscribe(`chat-messages-${userId}`);
+        ws.raw?.unsubscribe(`agent-status-${userId}`);
+        console.log(`WebSocket connection closed for user ${userId}`);
       },
     };
   })

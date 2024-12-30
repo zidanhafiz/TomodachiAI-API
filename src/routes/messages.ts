@@ -64,7 +64,7 @@ const messages = new Hono<{
             userId,
           },
           {
-            delay: 5000,
+            delay: 2000,
             removeOnComplete: {
               age: 600, // keep up to 10 minutes
               count: 100, // keep up to 100 jobs
@@ -75,7 +75,7 @@ const messages = new Hono<{
           }
         );
 
-        server.publish(chatMessagesTopic, JSON.stringify({ eventName: chatMessagesTopic, data: message }));
+        server.publish(`${chatMessagesTopic}-${userId}`, JSON.stringify({ eventName: chatMessagesTopic, data: message }));
         return c.json({ data: "Message sent" });
       } catch (error) {
         console.error(error);

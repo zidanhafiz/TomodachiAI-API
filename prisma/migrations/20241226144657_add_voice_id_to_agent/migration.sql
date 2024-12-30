@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "agents" ADD COLUMN     "voiceId" TEXT NOT NULL DEFAULT 'pFZP5JQG7iQjIQuC4Bku';
